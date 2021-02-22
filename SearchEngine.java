@@ -2,162 +2,129 @@ package search;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Scanner;
+import java.util.*;
 
+// Whole Person class is redundant but I wanted to practice with different implementations during that project.
 class Person {
-    protected String firstName = null;
-    protected String lastName = null;
-    protected String email = null;
+    private String firstName;
+    private String lastName = "";
+    private String email = "";
 
-    public String getFirstName() {
-        return this.firstName;
-    }
-    public void setFirstName(String firstName) {
-        if (firstName != null) {
-            this.firstName = firstName;
+    Person (String[] personData) {
+        switch (personData.length) {
+            case 1:
+                this.firstName = personData[0];
+                break;
+            case 2:
+                this.firstName = personData[0];
+                this.lastName = personData[1];
+                break;
+            case 3:
+                this.firstName = personData[0];
+                this.lastName = personData[1];
+                this.email = personData[2];
+                break;
         }
     }
-    public String getLastName() {
-        return this.lastName;
-    }
-    public void setLastName(String lastName) {
-        if (lastName != null) {
-            this.lastName = lastName;
-        }
-    }
-    public String getEmail() {
-        return this.email;
-    }
-    public void setEmail(String email) {
-        if (email != null) {
-            this.email = email;
-        }
-    }
+
     public String getFullInfo() {
-        if (this.firstName != null && this.lastName != null && this.email != null) {
-            return this.firstName + " " + this.lastName + " " + this.email;
-        } else if (this.firstName != null && this.lastName != null) {
-            return this.firstName + " " + this.lastName;
-        } else {
-            return this.firstName;
-        }
+        return (this.firstName + " " + this.lastName + " " + this.email).strip();
     }
 }
 
 public class SearchEngine {
-    public static File findFile(String[] args) {
-        String fileName = "";
-        for (int i = 0; i < args.length; i++) {
-            if ("--data".equals(args[i])) {
-                fileName = args[i + 1];
-                break;
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final ArrayList<Person> allPeopleObjects = new ArrayList<>();
+    private static final ArrayList<String> allPeopleLines = new ArrayList<>();
+    private static final Map<String, ArrayList<Integer>> invertedIndexMap = new HashMap<>();
+
+    public static void main(String[] args) {
+        try {
+            dataInit(args[1]); //assuming 1st argument == --data and 2nd is file name
+            menuLoop();
+        } catch (FileNotFoundException e) {
+            System.out.println("Error! File not found.");
+        } catch (NumberFormatException n) {
+            System.out.println("Error! Wrong format input.");
+        } // catch blocks doesn't provide further execution after catching as idea of next upgrade
+    }
+
+    private static void dataInit(String fileName) throws FileNotFoundException {
+        Scanner parser = new Scanner(new File(fileName));
+        int lineNum = 0;
+        while (parser.hasNextLine()) {
+            String userData = parser.nextLine();
+            String[] personDetails = userData.split("\\s");
+            allPeopleObjects.add(new Person(personDetails));
+            allPeopleLines.add(userData);
+            for (String word : personDetails) {
+                invertedIndexMap.putIfAbsent(word.toUpperCase(), new ArrayList<>());
+                invertedIndexMap.get(word.toUpperCase()).add(lineNum);
+            }
+            lineNum++;
+        }
+        parser.close();
+    }
+
+    private static void menuLoop() throws NumberFormatException {
+        boolean execution = true;
+        while (execution) {
+            int userCommand;
+            displayMenu();
+            userCommand = Integer.parseInt(scanner.nextLine());
+            switch (userCommand) {
+                case 1:
+                    searchMenu();
+                    break;
+                case 2:
+                    displayAllPeople();
+                    break;
+                case 0:
+                    System.out.println("Bye!");
+                    execution = false;
+                    break;
+                default:
+                    System.out.println("Not supported command. Please choose from the available ones.");
             }
         }
+    }
 
-        return new File(fileName);
-    }
-    private static Person[] dataConstructor(File dataFile) throws FileNotFoundException {
-        Scanner lineCheck = new Scanner(dataFile);
-        int linesNumber = 0;
-        while (lineCheck.hasNextLine()) {
-            linesNumber++;
-            lineCheck.nextLine();
-        }
-        lineCheck.close();
-        Person[] people = new Person[linesNumber];
-        Scanner parseData = new Scanner(dataFile);
-        for (int i = 0; i < linesNumber; i++) {
-            String[] personInfo = parseData.nextLine().split(" ");
-            people[i] = initPerson(personInfo);
-        }
-        parseData.close();
-        return people;
-    }
-    public static Person initPerson(String[] infoArray) {
-        int paramsNum = infoArray.length;
-        Person person = new Person();
-        switch (paramsNum) {
-            case 1:
-                person.setFirstName(infoArray[0]);
-                break;
-            case 2:
-                person.setFirstName(infoArray[0]);
-                person.setLastName(infoArray[1]);
-                break;
-            default:
-                person.setFirstName(infoArray[0]);
-                person.setLastName(infoArray[1]);
-                person.setEmail(infoArray[2]);
-                break;
-        }
-        return person;
-    }
-    public static void displayMenu() {
+    private static void displayMenu() {
         System.out.println("\n=== Menu ===");
         System.out.println("1. Find a person");
         System.out.println("2. Print all people");
         System.out.println("0. Exit");
     }
-    public static int getUserCommand() {
-        Scanner scanner = new Scanner(System.in);
-        int command;
-        try {
-            command = scanner.nextInt();
-        } catch (NumberFormatException e) {
-            System.out.println("Wrong input format!");
-            command = -1;
-        }
-        return command;
-    }
-    public static void searchPerson(Person[] people) {
-        Scanner scanner = new Scanner(System.in);
-        boolean found = false;
 
-        System.out.println("\nEnter a name or email to search all suitable people:");
-        String query = scanner.next().toLowerCase();
-        for (Person person: people) {
-            String prefix = !found ? "Found people:\n" : "";
-            String firstName = person.getFirstName();
-            String lastName = person.getLastName();
-            String email = person.getEmail();
-            if (firstName != null && firstName.toLowerCase().contains(query)) {
-                found = true;
-                System.out.println(prefix + person.getFullInfo());
-            } else if (lastName != null && lastName.toLowerCase().contains(query)) {
-                found = true;
-                System.out.println(prefix + person.getFullInfo());
-            } else if (email != null && email.toLowerCase().contains(query)) {
-                found = true;
-                System.out.println(prefix + person.getFullInfo());
+    private static void searchMenu() {
+        System.out.println("Enter a name or email to search all suitable people:");
+        ArrayList<String> results = searchQuery(scanner.nextLine().toUpperCase());
+        if (results == null) {
+            System.out.println("No matching people found.");
+        } else {
+            System.out.println(results.size() + " persons found:");
+            for (String person : results) {
+                System.out.println(person);
             }
         }
-        if (!found) {
-            System.out.println("No such person was found!");
+    }
+
+    private static ArrayList<String> searchQuery(String query) {
+        var results = new ArrayList<String>();
+        if (invertedIndexMap.containsKey(query)) {
+            ArrayList<Integer> lines = invertedIndexMap.get(query);
+            for (int line : lines) {
+                results.add(allPeopleLines.get(line));
+            }
+            return results;
+        } else {
+            return null;
         }
     }
-    public static void displayPeople(Person[] people) {
-        System.out.println("\n=== List of people ===");
-        for (Person person: people) {
+
+    private static void displayAllPeople() {
+        for (Person person : allPeopleObjects) {
             System.out.println(person.getFullInfo());
-        }
-    }
-    public static void main(String[] args) throws FileNotFoundException {
-        File dataFile = findFile(args);
-        Person[] peopleData = dataConstructor(dataFile);
-        while (true) {
-            int userCommand;
-            displayMenu();
-            userCommand = getUserCommand();
-            if (userCommand == 0) {
-                System.out.println("Bye!");
-                break;
-            } else if (userCommand == 1) {
-                searchPerson(peopleData);
-            } else if (userCommand == 2) {
-                displayPeople(peopleData);
-            } else {
-                System.out.println("\nIncorrect option! Try again!");
-            }
         }
     }
 }
