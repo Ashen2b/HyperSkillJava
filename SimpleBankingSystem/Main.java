@@ -55,8 +55,7 @@ public class Main {
                 "id INTEGER," +
                 "number TEXT," +
                 "pin TEXT," +
-                "balance INTEGER DEFAULT 0" +
-		");";
+                "balance INTEGER DEFAULT 0);";
         statement.executeUpdate(createTableSQL);
     }
 
