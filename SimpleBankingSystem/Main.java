@@ -19,14 +19,14 @@ public class Main {
 
     public static void main(String[] args) {
         setDatabaseFileName(args);
-        try {
+        try (Scanner scanner = new Scanner(System.in)) {
             connection = DriverManager.getConnection(JDBC_DRIVER + databaseFile);
             statement = connection.createStatement();
             createTableIfNotExists();
             while (isAlive) {
                 displayMenu();
-                setCommand();
-                invokeCommand();
+                setCommand(scanner);
+                invokeCommand(scanner);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -56,7 +56,7 @@ public class Main {
                 "number TEXT," +
                 "pin TEXT," +
                 "balance INTEGER DEFAULT 0);";
-        statement.execute(createTableSQL);
+        statement.executeUpdate(createTableSQL);
     }
 
     private static void displayMenu() {
@@ -74,8 +74,8 @@ public class Main {
         }
     }
 
-    private static void setCommand() {
-        try (Scanner scanner = new Scanner(System.in)) {
+    private static void setCommand(Scanner scanner) {
+        try {
             command = Integer.parseInt(scanner.next());
         } catch (NumberFormatException e) {
             System.out.println("Invalid command");
@@ -83,7 +83,7 @@ public class Main {
         }
     }
 
-    private static void invokeCommand() {
+    private static void invokeCommand(Scanner scanner) {
         if (command == 0) {
             isAlive = false;
             System.out.println("Bye!");
@@ -93,22 +93,23 @@ public class Main {
                     showBalance();
                     break;
                 case 2:
-                    addIncome();
+                    addIncome(scanner);
                     break;
                 case 3:
-                    doTransfer();
+                    doTransfer(scanner);
                     break;
                 case 4:
                     closeAccount();
                     break;
                 case 5:
                     logOut();
+                    System.out.println("You have successfully logged out!");
             }
         } else {
             if (command == 1) {
                 createAccount();
             } else if (command == 2) {
-                logIntoAccount();
+                logIntoAccount(scanner);
             }
         }
     }
@@ -117,9 +118,9 @@ public class Main {
         new Card(statement);
     }
 
-    private static void logIntoAccount() {
+    private static void logIntoAccount(Scanner scanner) {
         ArrayList<Card> allCards;
-        try (Scanner scanner = new Scanner(System.in)) {
+        try {
 
             System.out.println("Enter your card number:");
             String userCardNum = scanner.next();
@@ -153,16 +154,16 @@ public class Main {
         System.out.println("Balance: " + currentCard.getBalance());
     }
 
-    private static void addIncome() {
+    private static void addIncome(Scanner scanner) {
         System.out.println("Enter income:");
-        try (Scanner scanner = new Scanner(System.in)) {
+        try {
             currentCard.incomeValidation(scanner.nextInt());
         } catch (InputMismatchException e) {
             System.out.println("Wrong input format!");
         }
     }
 
-    private static void doTransfer() {
+    private static void doTransfer(Scanner scanner) {
         int currentBalance = currentCard.getBalance();
         Savepoint transferPoint = null;
         try {
@@ -170,7 +171,7 @@ public class Main {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        try (Scanner scanner = new Scanner(System.in)) {
+        try {
             System.out.println("Transfer");
             System.out.println("Enter card number:");
             String targetCard = scanner.next();
@@ -207,6 +208,7 @@ public class Main {
 
     private static void closeAccount() {
         currentCard.closeCard();
+        logOut();
     }
 
     private static boolean checkIfExists(String targetCard) {
@@ -239,6 +241,5 @@ public class Main {
     private static void logOut() {
         currentCard = null;
         isLogged = false;
-        System.out.println("You have successfully logged out!");
     }
 }

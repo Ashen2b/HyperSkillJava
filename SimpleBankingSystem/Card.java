@@ -158,7 +158,7 @@ class Card {
     }
 
     private void saveCard() {
-        String SQL = String.format("INSERT INTO card VALUES (%d, '%s', '%s', 0);", CARD_ID, CARD_NUM, PIN);
+        String SQL = String.format("INSERT INTO card VALUES (%d, %s, %s, 0);", CARD_ID, CARD_NUM, PIN);
         try {
             statement.executeUpdate(SQL);
         } catch (SQLException e) {
