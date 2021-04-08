@@ -1,0 +1,12 @@
+platform/CodeSharingPlatform.java
+ platform.CodeSharingPlatform
+platform/repository/CodeSnippetsRepository.java
+ platform.repository.CodeSnippetsRepository
+platform/model/CodeSnippet.java
+ platform.model.CodeSnippet
+platform/controller/ApiController.java
+ platform.controller.ApiController
+platform/service/CodeSnippetService.java
+ platform.service.CodeSnippetService
+platform/controller/WebController.java
+ platform.controller.WebController
